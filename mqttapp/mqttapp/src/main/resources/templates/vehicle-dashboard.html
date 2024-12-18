@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Vehicle State</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+    <style>
+        /* General Styles */
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background: #f3f8fc; /* Light background for better readability */
+            color: #333; /* Dark font for contrast */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Header Styling */
+        .dashboard-header {
+            background: linear-gradient(to right, #6a11cb, #2575fc); /* Blue header */
+            padding: 20px;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .dashboard-header h1 {
+            font-size: 36px;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        /* Sidebar Styling */
+         .sidebar {
+            width: 250px;
+            height: 100vh;
+            background: linear-gradient(to right, #6a11cb, #2575fc); /* Blue header */
+            color: #fff;
+            padding: 20px;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar ul li {
+            margin-bottom: 20px;
+        }
+
+        .sidebar ul li a {
+            text-decoration: none;
+            color: #f8f9fa;
+            font-size: 18px;
+            padding: 10px 15px;
+            display: block;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar ul li a:hover {
+            background: #2575fc;
+            color: white;
+        }
+
+        /* Main Content Styling */
+        .main-content {
+            margin-left: 270px; /* Adjusted to fit the sidebar */
+            padding: 20px;
+            flex: 1;
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        /* Dashboard Cards */
+        .dashboard-card {
+        	border: 2px solid #d0e7ff;
+            background: #ffffff; /* White card background */
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .dashboard-card h2 {
+            font-size: 20px;
+            color: #00509e; /* Title color */
+            margin-bottom: 10px;
+        }
+
+        .dashboard-card p {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 0;
+            color: #333;
+        }
+
+        /* Footer Styling */
+        .footer {
+            background: linear-gradient(to right, #6a11cb, #2575fc); /* Blue header */
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+            position: relative;
+            bottom: 0;
+        }
+
+        .footer a {
+            color: #4caf50;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+             color: black;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 15px;
+            }
+
+            .dashboard-header h1 {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="dashboard-header">
+        <h1>Vehicle State</h1>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2>Menu</h2>
+        <ul>
+            <li><a th:href="@{/vehicleState}">Dashboard</a></li>
+            <li><a th:href="@{/odometer}">Cluster</a></li>
+            <li><a th:href="@{/diagnostices}">Diagnostics</a></li>
+            <li><a th:href="@{/controlVehicle}">Control State</a></li>
+            <li><a th:href="@{/vehicleSettings}">Settings</a></li>
+            <li><a th:href="@{/googleMapAPI}">Vehicle Location</a></li>
+            <li><a th:href="@{/showMyLoginPage}">Logout</a></li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="dashboard-grid">
+            <!-- Cards -->
+            <div class="dashboard-card">
+                <h2>Miles Driven</h2>
+                <p id="miles-driven">1200 mi</p>
+            </div>
+            <div class="dashboard-card">
+                <h2>Engine Status</h2>
+                <p id="engine-status">On</p>
+            </div>
+            <div class="dashboard-card">
+                <h2>ACC Mode Status</h2>
+                <p id="acc-mode-status">On</p>
+            </div>
+            <div class="dashboard-card">
+                <h2>TJP Mode Status</h2>
+                <p id="tjp-mode-status">On</p>
+            </div>
+            <div class="dashboard-card">
+                <h2>Trunk Status</h2>
+                <p id="trunk-status">On</p>
+            </div>
+            <div class="dashboard-card">
+                <h2>AC State</h2>
+                <p id="ac-state">Off</p>
+            </div>
+            <div class="dashboard-card">
+                <h2>Door Status</h2>
+                <p id="door-status">Unlocked</p>
+            </div>
+            <div class="dashboard-card">
+                <h2>Warning Status</h2>
+                <p id="warning-status">Low Fuel</p>
+            </div>
+            <div class="dashboard-card">
+                <h2>Security Alarm</h2>
+                <p id="security-alarm">Armed</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>&copy; 2024 Vehicle Dashboard. Built with ❤️ <a href="https://github.com/pratikvyas101">Pratik Vyas</a>.</p>
+    </div>
+
+    <script>
+        let stompClient = null;
+
+        function connectWebSocket() {
+        	const socket = new SockJS('/websocket-endpoint');
+            stompClient = Stomp.over(socket);   
+
+            stompClient.connect({}, function () {
+                stompClient.subscribe('/topic/vehicle-state', function (message) {
+                    const data = JSON.parse(message.body)[0];
+                    document.querySelector('#miles-driven').textContent = `${data.milesDriven} mi`;
+                    document.querySelector('#engine-status').textContent = data.engineStatus;
+                    document.querySelector('#acc-mode-status').textContent = data.accModeStatus;
+                    document.querySelector('#tjp-mode-status').textContent = data.tjpModeStatus;
+                    document.querySelector('#trunk-status').textContent = data.trunkStatus;
+                    document.querySelector('#ac-state').textContent = data.acState;
+                    document.querySelector('#door-status').textContent = data.doorStatus;
+                    document.querySelector('#warning-status').textContent = data.warningStatus;
+                    document.querySelector('#security-alarm').textContent = data.securityAlarm;
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', connectWebSocket);
+    </script>
+</body>
+</html>
